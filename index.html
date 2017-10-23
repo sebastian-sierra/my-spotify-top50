@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<meta charset='utf-8'>
+<style>
+    .nodes circle {
+        stroke: #fff;
+    }
+
+    image {
+        clip-path: circle(50% at 50% 50%)
+    }
+
+    .label {
+        font-family: 'Raleway', sans-serif;
+    }
+
+    div.tooltip {
+        position: absolute;
+        text-align: center;
+        width: 110px;
+        font-family: 'Raleway', sans-serif;
+        font-size: 12px;
+        background: #2F2F2F;
+        color: #FFF;
+        pointer-events: none;
+    }
+</style>
+<svg width='1200' height='630'></svg>
+<link href='https://fonts.googleapis.com/css?family=Raleway' rel='stylesheet'>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<script src='https://d3js.org/d3.v4.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.24.0/d3-legend.js'></script>
+<script>
+    const svg = d3.select('svg'),
+        width = +svg.attr('width'),
+        height = +svg.attr('height');
+
+    const tooltipDiv = d3.select('body').append('div')
+        .attr('class', 'tooltip')
+        .style('opacity', 0);
+
+    const color = d3.scaleOrdinal(d3.schemeCategory20);
+
+    const simulation = d3.forceSimulation()
+        .force('link', d3.forceLink().id(d => d.id))
+        .force('collide', d3.forceCollide(16 * 2))
+        .force('center', d3.forceCenter((width / 2), height / 2));
+
+    svg.append('g')
+        .attr('class', 'category-legend')
+        .attr('transform', 'translate(20,20)');
+
+    const legend = d3.legendColor().shape('circle');
+
+
+    d3.json('top50.json', function (error, graph) {
+        if (error) throw error;
+
+        const types = d3.set(graph.edges.map(e => e.type)).values();
+        color.domain(types);
+
+        legend.scale(color);
+
+        svg.select('.category-legend')
+            .call(legend);
+
+        const link = svg.append('g')
+            .attr('class', 'links')
+            .selectAll('line')
+            .data(graph.edges)
+            .enter()
+            .append('line')
+            .style('stroke', e => color(e.type))
+            .attr('stroke-width', 1);
+
+        const nodeGroup = svg.append('g')
+            .attr('class', 'nodes')
+            .selectAll('.node')
+            .data(graph.nodes)
+            .enter()
+            .append('g')
+            .attr('class', 'node')
+            /*.call(d3.drag()
+                .on('start', dragstarted)
+                .on('drag', dragged)
+                .on('end', dragended))*/;
+
+        nodeGroup
+            .append('image')
+            .attr('xlink:href', d => d.img)
+            .attr('x', -15)
+            .attr('y', -15)
+            .attr('width', 30)
+            .attr('height', 30)
+            .on('mouseover', d => {
+                svg.selectAll('.links line')
+                    .attr('stroke-width', e => {
+                        return d.id === e.source.id || d.id === e.target.id ? 2 : 0.5;
+                    })
+                    .attr('opacity', e => {
+                        return d.id === e.source.id || d.id === e.target.id ? 1 : 0.1;
+                    });
+                tooltipDiv.transition()
+                    .duration(200)
+                    .style('opacity', 0.7);
+                tooltipDiv.html(`${d.name}`)
+                    .style('left', (d.x) + 'px')
+                    .style('top', (d.y) + 'px');
+
+            })
+            .on('mouseout', () => {
+                svg.selectAll('.links line')
+                    .attr('stroke-width', 1)
+                    .attr('opacity', 1);
+                tooltipDiv.transition()
+                    .duration(200)
+                    .style('opacity', 0);
+            })
+            .on('click', d => {
+
+            });
+        /*
+              const node = nodeGroup
+                  .append('circle')
+                  .attr('r', 5)
+                  .on('mouseover', d => {
+                      console.log(d);
+                  });*/
+
+        simulation
+            .nodes(graph.nodes)
+            .on('tick', ticked);
+
+        simulation.force('link')
+            .links(graph.edges);
+
+        function ticked() {
+            link
+                .attr('x1', function (d) {
+                    return d.source.x;
+                })
+                .attr('y1', function (d) {
+                    return d.source.y;
+                })
+                .attr('x2', function (d) {
+                    return d.target.x;
+                })
+                .attr('y2', function (d) {
+                    return d.target.y;
+                });
+
+            nodeGroup.attr('transform', function (d) {
+                return 'translate(' + d.x + ',' + d.y + ')';
+            });
+        }
+    });
+
+    function dragstarted(d) {
+        if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    function dragged(d) {
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+    }
+
+    function dragended(d) {
+        if (!d3.event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+</script>
