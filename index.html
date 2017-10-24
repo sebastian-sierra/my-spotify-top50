@@ -115,9 +115,6 @@
                     .duration(200)
                     .attr('opacity', e => {
                         return d.id === e.source.id || d.id === e.target.id ? 1 : 0;
-                    })
-                    .attr('stroke-width', e => {
-                        return d.id === e.source.id || d.id === e.target.id ? 2 : 0;
                     });
 
                 tooltipDiv.transition()
@@ -127,6 +124,14 @@
                     .style('left', (d.x-55) + 'px')
                     .style('top', (d.y+10) + 'px');
 
+                d3.selectAll(nodes)
+                    .classed('greyed', n => n.id !== d.id && !isAdjacent(d, n))
+                    .transition().duration(200)
+                    .attr('x', n => isAdjacent(d, n) ? -30 : -25)
+                    .attr('y', n => isAdjacent(d, n) ? -30 : -25)
+                    .attr('width', n => isAdjacent(d, n) ? 60 : 50)
+                    .attr('height', n => isAdjacent(d, n) ? 66 : 50);
+
                 d3.select(nodes[i])
                     .transition()
                     .duration(200)
@@ -135,8 +140,6 @@
                     .attr('width', 80)
                     .attr('height', 80);
 
-                d3.selectAll(nodes)
-                    .classed('greyed', n => n.id !== d.id)
 
             })
             .on('mouseout', (d, i, nodes) => {
@@ -144,22 +147,21 @@
                     .transition()
                     .duration(200)
                     .attr('opacity', 1)
-                    .attr('stroke-width', 1);
+                    .attr('stroke-width', 1)
+                    .style('stroke', e => color(e.type));
 
                 tooltipDiv.transition()
                     .duration(200)
                     .style('opacity', 0);
 
-                d3.select(nodes[i])
+                d3.selectAll(nodes)
+                    .classed('greyed', false)
                     .transition()
                     .duration(200)
                     .attr('x', -25)
                     .attr('y', -25)
                     .attr('width', 50)
                     .attr('height', 50);
-
-                d3.selectAll(nodes)
-                    .classed('greyed', false);
             })
             .on('click', d => {
                 window.open(d.url);
@@ -198,6 +200,12 @@
                 return 'translate(' + d.x + ',' + d.y + ')';
             });
         }
+
+        function isAdjacent(source, node) {
+            return graph.edges
+                .filter(e => e.source.id === source.id || e.target.id === source.id)
+                .find(e => e.target.id === node.id || e.source.id === node.id) !== undefined;
+        }
     });
 
     function dragstarted(d) {
@@ -224,7 +232,7 @@
 
     function genreY(n) {
         const genres = n.genres.join('-');
-        if(genres.length === 0) {
+        if(genres.length === 0 && !genres.includes('hip hop') && !genres.includes('rap')  && genres.includes('house')) {
             return height / 4;
         } else {
             return height/2;
