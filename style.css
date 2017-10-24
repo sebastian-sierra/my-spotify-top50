@@ -1,0 +1,39 @@
+.nodes image {
+    clip-path: circle(30% at 50% 50%);
+    -webkit-clip-path: circle(30% at 50% 50%);
+    cursor: pointer;
+}
+
+.label {
+    font-family: 'Raleway', sans-serif;
+}
+
+div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 110px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 10px;
+    background: #2F2F2F;
+    color: #FFF;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.greyed {
+    filter: url("#greyscale");
+    filter: greyscale(100%);
+}
+
+.legendlabel {
+    font-size: 10px;
+    text-transform: capitalize;
+}
+
+.legend-hover {
+    font-weight: bold;
+}
+
+.legendlabel:hover{
+    font-weight: bold;
+}

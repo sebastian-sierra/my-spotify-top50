@@ -1,247 +1,106 @@
-<!DOCTYPE html>
-<meta charset='utf-8'>
-<style>
-    .nodes image {
-        clip-path: circle(30% at 50% 50%);
-        -webkit-clip-path: circle(30% at 50% 50%);
-        cursor: pointer;
-    }
+<!DOCTYPE HTML>
+<!--
+	Directive by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+    <title>Directive by HTML5 UP</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+    <link href='https://fonts.googleapis.com/css?family=Raleway' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-    .label {
-        font-family: 'Raleway', sans-serif;
-    }
+<!-- Header -->
+<div id="header">
+    <span class="logo icon fa-spotify"></span>
+    <h1>My top 50</h1>
+    <p>Siempre que me preguntan qué tipo de música me gusta he querido responder algo distinto a "de todo" <br>
+        Hice está visualización a partir de mis 50 artistas favoritos para Spotify y quise explorar cómo se relacionan entre ellos
+    </p>
+</div>
 
-    div.tooltip {
-        position: absolute;
-        text-align: center;
-        width: 110px;
-        font-family: 'Raleway', sans-serif;
-        font-size: 12px;
-        background: #2F2F2F;
-        color: #FFF;
-        pointer-events: none;
-    }
+<!-- Main -->
+<div id="main">
 
-    .greyed {
-        filter: url("#greyscale");
-        filter: greyscale(100%);
-    }
-</style>
-<svg width='1200' height='630'>
-    <defs>
-        <filter id="greyscale">
-            <feColorMatrix
-                    type="matrix"
-                    values="0 1 0 0 0
-              0 1 0 0 0
-              0 1 0 0 0
-              0 1 0 1 0 "/>
-        </filter>
-    </defs>
+    <div class="box container">
+        <section>
+            <p>A continuación se presenta un grafo mostrando las relaciones mencionadas anteriormente.
+                Para resaltar por géneros deslice sus mouse encima de los géneros a la izquierda.
+                En cualquier momento puede deslizar también su mouse encima de un artista para ver con qué otros está relacionado más claramente.
+                Haga click encima de un artista para abrir su página de Spotify en una nueva pestaña.
+            </p>
+        </section>
+        <section>
+            <svg width="930" height="630">
+                <defs>
+                    <filter id="greyscale">
+                        <feColorMatrix
+                                type="matrix"
+                                values="0 1 0 0 0
+                  0 1 0 0 0
+                  0 1 0 0 0
+                  0 1 0 1 0 ">
+                        </feColorMatrix>
+                    </filter>
+                </defs>
+            </svg>
+        </section>
+        <header>
+            <h2>Pharrell Williams, mi puente entre el Hip Hop y la electrónica</h2>
+        </header>
+        <section>
+            <h4>
+                De la visualización podemos concluir varias cosas sobre mis gustos músicales:
+            </h4>
+            <ul class="default">
+                <li>
+                    Me gusta bastante varios subgéneros del Hip Hop y del House
+                </li>
+                <li>
+                    Pharrell Williams es mi puente entre los dos géneros conectando al Pop con el Pop Rap.
+                </li>
+                <li>
+                    No salgo de muchos géneros; mi música está altamente conectada entre si.
+                </li>
 
-</svg>
-<link href='https://fonts.googleapis.com/css?family=Raleway' rel='stylesheet'>
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-      integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-<script src='https://d3js.org/d3.v4.min.js'></script>
-<script src='https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.24.0/d3-legend.js'></script>
-<script>
-    const svg = d3.select('svg'),
-        width = +svg.attr('width'),
-        height = +svg.attr('height');
-
-    const tooltipDiv = d3.select('body').append('div')
-        .attr('class', 'tooltip')
-        .style('opacity', 0);
-
-    const color = d3.scaleOrdinal(d3.schemeCategory20);
-
-    const simulation = d3.forceSimulation()
-        .force('link', d3.forceLink().id(d => d.id))
-        .force('collide', d3.forceCollide(30))
-        .force('center', d3.forceCenter((width / 2), height / 2))
-        .force('genreX', d3.forceX(genreX).strength(0.02))
-        .force('genreY', d3.forceY(genreY));
-
-    svg.append('g')
-        .attr('class', 'category-legend')
-        .attr('transform', 'translate(20,20)');
-
-    const legend = d3.legendColor().shape('circle');
-
-
-    d3.json('top50.json', function (error, graph) {
-        if (error) throw error;
-
-        const types = d3.set(graph.edges.map(e => e.type)).values();
-        color.domain(types);
-
-        legend.scale(color);
-
-        svg.select('.category-legend')
-            .call(legend);
-
-        const link = svg.append('g')
-            .attr('class', 'links')
-            .selectAll('line')
-            .data(graph.edges)
-            .enter()
-            .append('line')
-            .style('stroke', e => color(e.type))
-            .attr('stroke-width', 1);
-
-        const nodeGroup = svg.append('g')
-                .attr('class', 'nodes')
-                .selectAll('.node')
-                .data(graph.nodes)
-                .enter()
-                .append('g')
-                .attr('class', 'node')
-            .call(d3.drag()
-                .on('start', dragstarted)
-                .on('drag', dragged)
-                .on('end', dragended));
-
-        nodeGroup
-            .append('image')
-            .attr('xlink:href', d => d.img)
-            .attr('x', -25)
-            .attr('y', -25)
-            .attr('width', 50)
-            .attr('height', 50)
-            .on('mouseover', (d, i, nodes) => {
-                svg.selectAll('.links line')
-                    .transition()
-                    .duration(200)
-                    .attr('opacity', e => {
-                        return d.id === e.source.id || d.id === e.target.id ? 1 : 0;
-                    });
-
-                tooltipDiv.transition()
-                    .duration(200)
-                    .style('opacity', 0.7);
-                tooltipDiv.html(`${d.name}`)
-                    .style('left', (d.x-55) + 'px')
-                    .style('top', (d.y+10) + 'px');
-
-                d3.selectAll(nodes)
-                    .classed('greyed', n => n.id !== d.id && !isAdjacent(d, n))
-                    .transition().duration(200)
-                    .attr('x', n => isAdjacent(d, n) ? -30 : -25)
-                    .attr('y', n => isAdjacent(d, n) ? -30 : -25)
-                    .attr('width', n => isAdjacent(d, n) ? 60 : 50)
-                    .attr('height', n => isAdjacent(d, n) ? 66 : 50);
-
-                d3.select(nodes[i])
-                    .transition()
-                    .duration(200)
-                    .attr('x', -40)
-                    .attr('y', -40)
-                    .attr('width', 80)
-                    .attr('height', 80);
+            </ul>
+        </section>
+    </div>
 
 
-            })
-            .on('mouseout', (d, i, nodes) => {
-                svg.selectAll('.links line')
-                    .transition()
-                    .duration(200)
-                    .attr('opacity', 1)
-                    .attr('stroke-width', 1)
-                    .style('stroke', e => color(e.type));
+</div>
 
-                tooltipDiv.transition()
-                    .duration(200)
-                    .style('opacity', 0);
+<!-- Footer -->
+<div id="footer">
+    <div class="container 75%">
 
-                d3.selectAll(nodes)
-                    .classed('greyed', false)
-                    .transition()
-                    .duration(200)
-                    .attr('x', -25)
-                    .attr('y', -25)
-                    .attr('width', 50)
-                    .attr('height', 50);
-            })
-            .on('click', d => {
-                window.open(d.url);
-        });
-        /*
-              const node = nodeGroup
-                  .append('circle')
-                  .attr('r', 5)
-                  .on('mouseover', d => {
-                      console.log(d);
-                  });*/
+        <ul class="icons">
+            <li><a href="https://github.com/ss1993/my-spotify-top50" class="icon fa-github"><span class="label">Github</span></a></li>
+        </ul>
 
-        simulation
-            .nodes(graph.nodes)
-            .on('tick', ticked);
+        <ul class="copyright">
+            <li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+        </ul>
 
-        simulation.force('link')
-            .links(graph.edges);
+    </div>
+</div>
 
-        function ticked() {
-            link
-                .attr('x1', function (d) {
-                    return d.source.x;
-                })
-                .attr('y1', function (d) {
-                    return d.source.y;
-                })
-                .attr('x2', function (d) {
-                    return d.target.x;
-                })
-                .attr('y2', function (d) {
-                    return d.target.y;
-                });
+<!-- Scripts -->
+<script src="assets/js/jquery.min.js"></script>
+<script src="assets/js/skel.min.js"></script>
+<script src="assets/js/util.js"></script>
+<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+<script src="assets/js/main.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.24.0/d3-legend.js"></script>
+<script src="scripts/music_graph.js"></script>
 
-            nodeGroup.attr('transform', function (d) {
-                return 'translate(' + d.x + ',' + d.y + ')';
-            });
-        }
-
-        function isAdjacent(source, node) {
-            return graph.edges
-                .filter(e => e.source.id === source.id || e.target.id === source.id)
-                .find(e => e.target.id === node.id || e.source.id === node.id) !== undefined;
-        }
-    });
-
-    function dragstarted(d) {
-        if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-    }
-
-    function dragged(d) {
-        d.fx = d3.event.x;
-        d.fy = d3.event.y;
-    }
-
-    function genreX(n) {
-        const genres = n.genres.join('-');
-        if(genres.includes('hip hop') || genres.includes('rap')) {
-            return width / 4 * 3;
-        } else if (genres.includes('house')){
-            return width / 4;
-        } else {
-            return width;
-        }
-    }
-
-    function genreY(n) {
-        const genres = n.genres.join('-');
-        if(genres.length === 0 && !genres.includes('hip hop') && !genres.includes('rap')  && genres.includes('house')) {
-            return height / 4;
-        } else {
-            return height/2;
-        }
-    }
-
-    function dragended(d) {
-        if (!d3.event.active) simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
-    }
-</script>
+</body>
+</html>
