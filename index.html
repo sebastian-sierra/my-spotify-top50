@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <meta charset='utf-8'>
 <style>
-    .nodes circle {
-        stroke: #fff;
-    }
-
-    image {
-        clip-path: circle(50% at 50% 50%)
+    .nodes image {
+        clip-path: circle(30% at 50% 50%);
+        cursor: pointer;
     }
 
     .label {
@@ -23,10 +20,28 @@
         color: #FFF;
         pointer-events: none;
     }
+
+    .greyed {
+        filter: url("#greyscale");
+        filter: greyscale(100%);
+    }
 </style>
-<svg width='1200' height='630'></svg>
+<svg width='1200' height='630'>
+    <defs>
+        <filter id="greyscale">
+            <feColorMatrix
+                    type="matrix"
+                    values="0 1 0 0 0
+              0 1 0 0 0
+              0 1 0 0 0
+              0 1 0 1 0 "/>
+        </filter>
+    </defs>
+
+</svg>
 <link href='https://fonts.googleapis.com/css?family=Raleway' rel='stylesheet'>
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+      integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <script src='https://d3js.org/d3.v4.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.24.0/d3-legend.js'></script>
 <script>
@@ -42,8 +57,10 @@
 
     const simulation = d3.forceSimulation()
         .force('link', d3.forceLink().id(d => d.id))
-        .force('collide', d3.forceCollide(16 * 2))
-        .force('center', d3.forceCenter((width / 2), height / 2));
+        .force('collide', d3.forceCollide(30))
+        .force('center', d3.forceCenter((width / 2), height / 2))
+        .force('genreX', d3.forceX(genreX).strength(0.02))
+        .force('genreY', d3.forceY(genreY));
 
     svg.append('g')
         .attr('class', 'category-legend')
@@ -73,51 +90,79 @@
             .attr('stroke-width', 1);
 
         const nodeGroup = svg.append('g')
-            .attr('class', 'nodes')
-            .selectAll('.node')
-            .data(graph.nodes)
-            .enter()
-            .append('g')
-            .attr('class', 'node')
-            /*.call(d3.drag()
+                .attr('class', 'nodes')
+                .selectAll('.node')
+                .data(graph.nodes)
+                .enter()
+                .append('g')
+                .attr('class', 'node')
+            .call(d3.drag()
                 .on('start', dragstarted)
                 .on('drag', dragged)
-                .on('end', dragended))*/;
+                .on('end', dragended));
 
         nodeGroup
             .append('image')
             .attr('xlink:href', d => d.img)
-            .attr('x', -15)
-            .attr('y', -15)
-            .attr('width', 30)
-            .attr('height', 30)
-            .on('mouseover', d => {
+            .attr('x', -25)
+            .attr('y', -25)
+            .attr('width', 50)
+            .attr('height', 50)
+            .on('mouseover', (d, i, nodes) => {
                 svg.selectAll('.links line')
-                    .attr('stroke-width', e => {
-                        return d.id === e.source.id || d.id === e.target.id ? 2 : 0.5;
-                    })
+                    .transition()
+                    .duration(200)
                     .attr('opacity', e => {
-                        return d.id === e.source.id || d.id === e.target.id ? 1 : 0.1;
+                        return d.id === e.source.id || d.id === e.target.id ? 1 : 0;
+                    })
+                    .attr('stroke-width', e => {
+                        return d.id === e.source.id || d.id === e.target.id ? 2 : 0;
                     });
+
                 tooltipDiv.transition()
                     .duration(200)
                     .style('opacity', 0.7);
                 tooltipDiv.html(`${d.name}`)
-                    .style('left', (d.x) + 'px')
-                    .style('top', (d.y) + 'px');
+                    .style('left', (d.x-55) + 'px')
+                    .style('top', (d.y+10) + 'px');
+
+                d3.select(nodes[i])
+                    .transition()
+                    .duration(200)
+                    .attr('x', -40)
+                    .attr('y', -40)
+                    .attr('width', 80)
+                    .attr('height', 80);
+
+                d3.selectAll(nodes)
+                    .classed('greyed', n => n.id !== d.id)
 
             })
-            .on('mouseout', () => {
+            .on('mouseout', (d, i, nodes) => {
                 svg.selectAll('.links line')
-                    .attr('stroke-width', 1)
-                    .attr('opacity', 1);
+                    .transition()
+                    .duration(200)
+                    .attr('opacity', 1)
+                    .attr('stroke-width', 1);
+
                 tooltipDiv.transition()
                     .duration(200)
                     .style('opacity', 0);
+
+                d3.select(nodes[i])
+                    .transition()
+                    .duration(200)
+                    .attr('x', -25)
+                    .attr('y', -25)
+                    .attr('width', 50)
+                    .attr('height', 50);
+
+                d3.selectAll(nodes)
+                    .classed('greyed', false);
             })
             .on('click', d => {
-
-            });
+                window.open(d.url);
+        });
         /*
               const node = nodeGroup
                   .append('circle')
@@ -163,6 +208,26 @@
     function dragged(d) {
         d.fx = d3.event.x;
         d.fy = d3.event.y;
+    }
+
+    function genreX(n) {
+        const genres = n.genres.join('-');
+        if(genres.includes('hip hop') || genres.includes('rap')) {
+            return width / 4 * 3;
+        } else if (genres.includes('house')){
+            return width / 4;
+        } else {
+            return width;
+        }
+    }
+
+    function genreY(n) {
+        const genres = n.genres.join('-');
+        if(genres.length === 0) {
+            return height / 4;
+        } else {
+            return height/2;
+        }
     }
 
     function dragended(d) {
